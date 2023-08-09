@@ -65,20 +65,24 @@ SELECT
 FROM pizza_runner.runner_orders;
 
 **1. How many pizzas were ordered?**
+
 SELECT COUNT(*)
 FROM pizza_runner.customer_orders;
 
 **2. How many unique customer orders were made?**
+
 SELECT COUNT(DISTINCT order_id) AS unique_customer_orders
 FROM pizza_runner.customer_orders;
 
 **3. How many successful orders were delivered by each runner?**
+
 SELECT runner_id, COUNT (order_id) AS successful_orders
 FROM pizza_runner.runner_orders
 WHERE cancellation is NULL
 GROUP BY runner_id;
 
 **4. How many of each type of pizza was delivered?**
+
 SELECT p.pizza_name, COUNT(p.pizza_name) AS amount_pizza
 FROM pizza_runner.pizza_names AS p
 JOIN pizza_runner.customer_orders AS c
@@ -89,6 +93,7 @@ WHERE r.cancellation IS NULL
 GROUP BY pizza_name;
 
 **5. How many Vegetarian and Meatlovers were ordered by each customer?**
+
 SELECT c.customer_id, p.pizza_name, COUNT(p.pizza_name)
 FROM pizza_runner.pizza_names AS p
 JOIN pizza_runner.customer_orders AS c
@@ -97,13 +102,17 @@ GROUP BY customer_id, pizza_name
 ORDER BY customer_id;
 
 **6. How many runners signed up for each 1 week period? (i.e. week starts 2021-01-01)**
+
 SELECT EXTRACT(WEEK from registration_date), COUNT(runner_id) AS amount_signed_up
 FROM pizza_runner.runners
 GROUP BY 1;
 
 **7. What was the average time in minutes it took for each runner to arrive at the Pizza Runner HQ to pickup the order?**
+
 WITH time_taken_cte AS
+
 (
+  
   SELECT 
     c.order_id, 
     c.order_time, 
@@ -115,6 +124,7 @@ WITH time_taken_cte AS
     ON c.order_id = r.order_id
   WHERE r.cancellation IS NULL
   GROUP BY c.order_id, c.order_time, r.pickup_time, r.runner_id
+
 )
 
 SELECT 
@@ -124,7 +134,9 @@ WHERE pickup_minutes > 1
 GROUP BY runner_id;
 
 **8. Is there any relationship between the number of pizzas and how long the order takes to prepare?**
+
 WITH time_taken_cte AS
+
 (
   SELECT 
     c.order_id,
@@ -138,10 +150,12 @@ WITH time_taken_cte AS
   WHERE r.cancellation IS NULL
   GROUP BY c.order_id, c.order_time, r.pickup_time
 )
+
 SELECT CORR (pickup_minutes, numberofpizza)
 from time_taken_cte;
 
 **9. What is the successful delivery percentage for each runner?**
+
 SELECT 
   runner_id, 
   ROUND(100 * SUM(
@@ -152,6 +166,7 @@ GROUP BY runner_id
 ORDER BY runner_id;
 
 **10. What was the most commonly added extra?**
+
 WITH toppings_cte AS (
 SELECT
   pizza_id,
@@ -168,12 +183,14 @@ GROUP BY t.topping_id, pt.topping_name
 LIMIT 1;
 
 **11. What was the most common exclusion?**
+
 WITH extra_count_cte AS
   (SELECT REGEXP_SPLIT_TO_TABLE(exclusions, '[,\s]+')::INTEGER AS extra_topping,
           count(*) AS purchase_counts
    FROM pizza_runner.customer_orders
    WHERE exclusions IS NOT NULL
    GROUP BY exclusions)
+
 SELECT topping_name,
        purchase_counts
 FROM extra_count_cte
@@ -181,6 +198,7 @@ INNER JOIN pizza_runner.pizza_toppings t ON extra_count_cte.extra_topping = t.to
 LIMIT 3;
 
 **12. If a Meat Lovers pizza costs $12 and Vegetarian costs $10 and there were no charges for changes - how much money has Pizza Runner made so far if there are no delivery fees?**
+
 SELECT CONCAT('$', SUM(CASE
                            WHEN pizza_id = 1 THEN 12
                            ELSE 10
@@ -191,6 +209,7 @@ INNER JOIN pizza_runner.runner_orders USING (order_id)
 WHERE cancellation IS NULL;
 
 **13. What if there was an additional $1 charge for any pizza extras? Add cheese is $1 extra**
+
 SELECT CONCAT('$', topping_revenue+ pizza_revenue) AS total_revenue
 FROM
   (SELECT SUM(CASE
@@ -208,12 +227,15 @@ FROM
       ORDER BY order_id)t1) t2;
 
 **14. The Pizza Runner team now wants to add an additional ratings system that allows customers to rate their runner, how would you design an additional table for this new dataset - generate a schema for this new table and insert your own data for ratings for each successful customer order between 1 to 5.**
+
 DROP TABLE IF EXISTS runner_rating;
 
 CREATE TABLE runner_rating (order_id INTEGER, rating INTEGER, review VARCHAR(100)) ;
 
 -- Order 6 and 9 were cancelled
+
 INSERT INTO runner_rating
+
 VALUES ('1', '1', 'Really bad service'),
        ('2', '1', NULL),
        ('3', '4', 'Took too long..."),
